@@ -4,26 +4,14 @@ from flask_socketio import SocketIO
 from pypylon import pylon
 from PIL import Image
 import cv2, threading, time, os, shutil, base64
-from threading import Lock
 
 app = Flask(__name__)
 socketio = SocketIO(app)
 
-# Lock for camera access
-camera_lock = Lock()
-
-class CameraSingleton:
-    _instance = None
-
-    def __new__(cls):
-        if cls._instance is None:
-            with camera_lock:
-                if cls._instance is None:
-                    cls._instance = super(CameraSingleton, cls).__new__(cls)
-                    cls._instance.camera = pylon.InstantCamera(pylon.TlFactory.GetInstance().CreateFirstDevice())
-                    cls._instance.camera.Open()
-                    cls._instance.camera.StartGrabbing(pylon.GrabStrategy_LatestImageOnly)
-        return cls._instance
+# Initialize the camera
+camera = pylon.InstantCamera(pylon.TlFactory.GetInstance().CreateFirstDevice())
+camera.Open()
+camera.StartGrabbing(pylon.GrabStrategy_LatestImageOnly)
 
 # Global variable to store the latest frame
 latest_frame = None
@@ -32,9 +20,8 @@ capture_thread_running = True
 
 def capture_frames():
     global latest_frame, capture_thread_running
-    camera_instance = CameraSingleton().camera
-    while capture_thread_running and camera_instance.IsGrabbing():
-        grabResult = camera_instance.RetrieveResult(5000, pylon.TimeoutHandling_ThrowException)
+    while capture_thread_running and camera.IsGrabbing():
+        grabResult = camera.RetrieveResult(5000, pylon.TimeoutHandling_ThrowException)
         if grabResult.GrabSucceeded():
             img = grabResult.Array
             # Resize the image to reduce resolution for streaming
@@ -52,16 +39,14 @@ capture_thread.start()
 
 @app.route('/')
 def index():
-    camera_instance = CameraSingleton().camera
     # Get the current exposure time
-    exposure_time = camera_instance.ExposureTime.GetValue()
+    exposure_time = camera.ExposureTime.GetValue()
     return render_template('index.html', exposure_time=exposure_time)
 
 @app.route('/set_exposure', methods=['POST'])
 def set_exposure():
     exposure_time = float(request.form['exposure_time'])
-    camera_instance = CameraSingleton().camera
-    camera_instance.ExposureTime.SetValue(exposure_time)
+    camera.ExposureTime.SetValue(exposure_time)
     return redirect(url_for('index'))
 
 @app.route('/capture_images', methods=['POST'])
@@ -76,11 +61,9 @@ def capture_images():
     capture_thread_running = False
     capture_thread.join()
 
-    camera_instance = CameraSingleton().camera
-
     # Capture images
     for i in range(num_frames):
-        grabResult = camera_instance.RetrieveResult(5000, pylon.TimeoutHandling_ThrowException)
+        grabResult = camera.RetrieveResult(5000, pylon.TimeoutHandling_ThrowException)
         if grabResult.GrabSucceeded():
             img = grabResult.Array
             img_pil = Image.fromarray(img)
