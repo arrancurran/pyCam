@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 from flask import Flask, render_template, request, redirect, url_for, send_file
 from flask_socketio import SocketIO
 from pypylon import pylon

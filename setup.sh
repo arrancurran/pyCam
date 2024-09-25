@@ -18,7 +18,7 @@ echo "source ~/pyCam-venv/bin/activate" >> ~/.bashrc
 source ~/.bashrc
 
 # Install necessary Python packages into our pyCam-venv virtual environment
-pip install pypylon flask flask-socketio opencv-python h5py
+pip install pypylon flask flask-socketio opencv-python h5py Pillow
 
 # Download and install the Pylon software
 mkdir -p ~/Downloads && cd ~/Downloads
