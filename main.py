@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, send_file
 from flask_socketio import SocketIO
 from pypylon import pylon
+from PIL import Image
 import cv2, threading, time, os, shutil, base64
 
 app = Flask(__name__)
