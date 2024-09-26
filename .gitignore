@@ -2,4 +2,4 @@
 *.h5
 *.hdf5
 *.log
-captures_images/
+captured_images/*
