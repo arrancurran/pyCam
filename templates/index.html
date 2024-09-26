@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Basler Camera Interface</title>
-    <link rel="stylesheet" href="style.css" />
-    <script src="socket.io.js"></script>
-    <!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script> -->
+    <title>Camera App</title>
+    <link rel="stylesheet" href="/static/style.css" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+    <script src="{{ url_for('static', filename='socket.io.min.js') }}"></script>
     <script>
         document.addEventListener("DOMContentLoaded", function () {
             var socket = io.connect(
@@ -21,13 +21,12 @@
 <section class="wrapper">
 
     <div class="container header">
-        <h1>Soft Matter Practical Camera App</h1>
+        <h1>Soft Matter Practical - Camera App</h1>
     </div>
 
     <div class="container controls">
-        <h1>Controls</h1> 
-        <form action="{{ url_for('set_exposure') }}" method="post">
-            <label for="exposure_time">Exposure Time (in microseconds):</label>
+        <form class="control_element" action="{{ url_for('set_exposure') }}" method="post">
+            <label for="exposure_time">Exposure (&micro;s)</label>
             <input
             type="number"
             id="exposure_time"
@@ -35,12 +34,12 @@
             step="0.1"
             value="{{ exposure_time }}"
             />
-            <button type="submit">Set Exposure</button>
+            <button class="control_button" type="submit">Set</button>
         </form>
 
-        <h2>Capture Time Series</h2>
-        <form action="{{ url_for('capture_images') }}" method="post">
-            <label for="num_frames">Number of Frames:</label>
+        <!-- <h2>Capture Time Series</h2> -->
+        <form class="control_element" action="{{ url_for('capture_images') }}" method="post">
+            <label for="num_frames">Frames</label>
             <input
             type="number"
             id="num_frames"
@@ -48,7 +47,7 @@
             min="1"
             value="10"
             />
-            <label for="timestep">Timestep (in seconds):</label>
+            <label for="timestep">Timestep (s)</label>
             <input
             type="number"
             id="timestep"
@@ -56,15 +55,17 @@
             step="0.1"
             value="1.0"
             />
-            <button type="submit">Capture Images</button>
+            <button class="control_button" type="submit">Start Capture</button>
         </form>
-
-        <h2>Download Captured Images</h2>
-        <a href="{{ url_for('download_images') }}">Download Images</a>
     </div>
     <div class="container stream">
-    <h1>Stream</h1>
-    <img id="live-stream" src="" alt="Live Stream" />
+        <img id="live-stream" src="" alt="Live Stream" />
+    </div>
+    <div class="container download">
+        <a class="download_link" href="{{ url_for('download_images') }}">Download Capture</a>
+    </div>
+    <div class="container footer">
+        <p>SMP - Camera App 0.1 beta</p>
     </div>
 
 </section>
