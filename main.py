@@ -18,19 +18,25 @@ latest_frame = None
 capture_thread = None
 capture_thread_running = True
 
+# 
+# STREAMING
+# 
+# while capture_thread_running is true, capture frames from the camera and emit them to the client
+# 
 def capture_frames():
     global latest_frame, capture_thread_running
     while capture_thread_running and camera.IsGrabbing():
         grabResult = camera.RetrieveResult(5000, pylon.TimeoutHandling_ThrowException)
         if grabResult.GrabSucceeded():
             img = grabResult.Array
-            # Resize the image to reduce resolution for streaming
+            # Reduce resolution for streaming
             img_resized = cv2.resize(img, (640, 480))
-            ret, buffer = cv2.imencode('.jpg', img_resized, [int(cv2.IMWRITE_JPEG_QUALITY), 70])
+            ret, buffer = cv2.imencode('.jpg', img_resized, [int(cv2.IMWRITE_JPEG_QUALITY), 80])
             latest_frame = base64.b64encode(buffer).decode('utf-8')
             socketio.emit('frame', latest_frame)
         grabResult.Release()
         time.sleep(0.1)  # Adjust the sleep time to control the frame rate
+
 
 # Start the frame capture thread
 capture_thread = threading.Thread(target=capture_frames)
@@ -39,7 +45,7 @@ capture_thread.start()
 
 @app.route('/')
 def index():
-    # Get the current exposure time
+    # Get the current exposure time and push to the client
     exposure_time = camera.ExposureTime.GetValue()
     return render_template('index.html', exposure_time=exposure_time)
 
@@ -61,16 +67,31 @@ def capture_images():
     capture_thread_running = False
     capture_thread.join()
 
+    # Start time tracking
+    start_time = time.time()
+    
     # Capture images
     for i in range(num_frames):
+        iteration_start_time = time.time()
+        
         grabResult = camera.RetrieveResult(5000, pylon.TimeoutHandling_ThrowException)
         if grabResult.GrabSucceeded():
             img = grabResult.Array
             img_pil = Image.fromarray(img)
             img_pil.save(os.path.join(save_path, f'image_{i+1}.tiff'))
             grabResult.Release()
-        time.sleep(timestep)
+        
+        iteration_end_time = time.time()
+        iteration_duration = iteration_end_time - iteration_start_time
+        sleep_time = max(0, timestep - iteration_duration)
+        time.sleep(sleep_time)
+        print({time.time()})
 
+    # End time tracking
+    end_time = time.time()
+    capture_duration = end_time - start_time
+    print(f"Capture duration: {capture_duration} seconds")
+    
     # Restart the capture thread
     capture_thread_running = True
     capture_thread = threading.Thread(target=capture_frames)
@@ -89,3 +110,4 @@ def download_images():
 
 if __name__ == '__main__':
     socketio.run(app, host='0.0.0.0', port=5000)
+    # socketio.run(app, host='192.168.10.1', port=5000)
