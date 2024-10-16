@@ -109,5 +109,5 @@ def download_images():
     return send_file('captured_images.zip', as_attachment=True)
 
 if __name__ == '__main__':
-    socketio.run(app, host='0.0.0.0', port=5000)
-    # socketio.run(app, host='192.168.10.1', port=5000)
+    # socketio.run(app, host='0.0.0.0', port=5000)
+    socketio.run(app, host='192.168.10.1', port=5000)
