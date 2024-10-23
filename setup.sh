@@ -38,7 +38,6 @@ export PATH=$PYLON_ROOT/bin:$PATH
 
 source ~/.bashrc
 
-
 # Configure Nginx
 sudo mkdir -p /var/www/pyCam
 
@@ -69,5 +68,36 @@ sudo systemctl restart nginx
 sudo chown -R www-data:www-data /var/www/pyCam
 sudo chmod -R 755 /var/www/pyCam
 
-# Run the application
-python main.py
+#  Enable the camera app to run at start/reboot by creating a service file
+
+SERVICE_FILE_CONTENT="[Unit]
+Description=pyCam
+After=network.target
+
+[Service]
+ExecStart=/home/pcsm-scope/pyCam-venv/bin/python /home/pcsm-scope/pyCam/main.py
+WorkingDirectory=/home/pcsm-scope/pyCam
+StandardOutput=inherit
+StandardError=inherit
+Restart=always
+User=pcsm-scope
+Environment="PATH=/home/pcsm-scope/pyCam-venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+
+[Install]
+WantedBy=multi-user.target"
+
+# Create a service file
+echo "$SERVICE_FILE_CONTENT" | sudo tee /etc/systemd/system/pyCam.service > /dev/null
+
+# Reload systemd to recognize the new service
+sudo systemctl daemon-reload
+
+# Enable the service to start on boot
+sudo systemctl enable pyCam.service
+
+# Start the service immediately
+sudo systemctl start pyCam.service
+
+# TODO: Check the service is running
+# Check the status of the service
+# sudo systemctl status pyCam.service
