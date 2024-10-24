@@ -7,18 +7,67 @@
     <link rel="stylesheet" href="/static/style.css" />
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
     <script src="{{ url_for('static', filename='socket.io.min.js') }}"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
     <script>
         document.addEventListener("DOMContentLoaded", function () {
-            var socket = io.connect(
-            "http://" + document.domain + ":" + location.port ) ;
+            var socket = io.connect("http://" + document.domain + ":" + location.port);
             var img = document.getElementById("live-stream");
+            var progress = document.getElementById("progress");
+
             socket.on("frame", function (data) {
-            img.src = "data:image/jpeg;base64," + data;
-            } ) ; } ) ;
+                img.src = "data:image/jpeg;base64," + data;
+            });
+
+            socket.on('show_progress', function() {
+                progress.style.display = 'block';
+            });
+
+            socket.on('progress', function(data) {
+                progress.innerText = 'Progress: ' + data.progress + '%';
+            });
+
+            socket.on('capture_complete', function() {
+                progress.style.display = 'none';
+            });
+
+            $('#start_acquisition').on('submit', function(e) {
+                e.preventDefault();
+                $.ajax({
+                    type: 'POST',
+                    url: '/start_acquisition',
+                    data: {
+                        num_frames: $('#num_frames').val(),
+                        timestep: $('#timestep').val()
+                    }
+                });
+            });
+        });
     </script>
+
+    <style>
+        #progress {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            padding: 20px;
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+            font-size: 1.4rem;
+            text-align: center;
+            z-index: 1000;
+        }
+    </style>
+
 </head>
 <body>
 <section class="wrapper">
+
+    <div id="progress" style="display: none;">Progress: 0%</div>
+    
 
     <div class="container header">
         <h1>Soft Matter Practical - Camera App</h1>
@@ -38,7 +87,7 @@
         </form>
 
         <!-- <h2>Capture Time Series</h2> -->
-        <form class="control_element" action="{{ url_for('capture_images') }}" method="post">
+        <form id="start_acquisition" class="control_element" action="{{ url_for('start_acquisition') }}" method="post">
             <label for="num_frames">Frames</label>
             <input
             type="number"
@@ -59,6 +108,7 @@
             />
             <button class="control_button" type="submit">Start Capture</button>
         </form>
+
         <p id="total_size">Total Size: 0 Mb</p>
         <p id="total_time">Total Time: 0 s</p>
         <script>

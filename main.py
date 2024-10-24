@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-from flask import Flask, render_template, request, redirect, url_for, send_file
+from flask import Flask, render_template, request, redirect, url_for, send_file, jsonify
 from flask_socketio import SocketIO
 from pypylon import pylon
 from PIL import Image
@@ -16,16 +16,17 @@ camera.StartGrabbing(pylon.GrabStrategy_LatestImageOnly)
 # Global variable to store the latest frame
 latest_frame = None
 capture_thread = None
-capture_thread_running = True
+stream_running = True
+progress = 0
 
 # 
 # STREAMING
 # 
-# while capture_thread_running is true, capture frames from the camera and emit them to the client
+# while stream_running is true, capture frames from the camera and emit them to the client
 # 
-def capture_frames():
-    global latest_frame, capture_thread_running
-    while capture_thread_running and camera.IsGrabbing():
+def stream():
+    global latest_frame, stream_running
+    while stream_running and camera.IsGrabbing():
         grabResult = camera.RetrieveResult(5000, pylon.TimeoutHandling_ThrowException)
         if grabResult.GrabSucceeded():
             img = grabResult.Array
@@ -39,7 +40,7 @@ def capture_frames():
 
 
 # Start the frame capture thread
-capture_thread = threading.Thread(target=capture_frames)
+capture_thread = threading.Thread(target=stream)
 capture_thread.daemon = True
 capture_thread.start()
 
@@ -55,25 +56,18 @@ def set_exposure():
     camera.ExposureTime.SetValue(exposure_time)
     return redirect(url_for('index'))
 
-@app.route('/capture_images', methods=['POST'])
-def capture_images():
-    global capture_thread_running, capture_thread
-    num_frames = int(request.form['num_frames'])
-    timestep = float(request.form['timestep'])
+def save(num_frames, timestep):
+    global progress
     save_path = 'captured_images'
     os.makedirs(save_path, exist_ok=True)
-
-    # Stop the capture thread
-    capture_thread_running = False
-    capture_thread.join()
-
-    # Start time tracking
-    start_time = time.time()
-    
-    # Capture images
+    # Emit an event to show the progress div
+    socketio.emit('show_progress')
     for i in range(num_frames):
         iteration_start_time = time.time()
         
+        progress = int( (i + 1) / num_frames * 100)
+        socketio.emit('progress', {'progress': progress})
+        time.sleep(timestep)
         grabResult = camera.RetrieveResult(5000, pylon.TimeoutHandling_ThrowException)
         if grabResult.GrabSucceeded():
             img = grabResult.Array
@@ -85,22 +79,18 @@ def capture_images():
         iteration_duration = iteration_end_time - iteration_start_time
         sleep_time = max(0, timestep - iteration_duration)
         time.sleep(sleep_time)
-        print({time.time()})
+        
+    # Emit an event to hide the progress div
+    socketio.emit('capture_complete')
 
-    # End time tracking
-    end_time = time.time()
-    capture_duration = end_time - start_time
-    print(f"Capture duration: {capture_duration} seconds")
+
+@app.route('/start_acquisition', methods=['POST'])
+def start_acquisition():
+    num_frames = int(request.form['num_frames'])
+    timestep = float(request.form['timestep'])
     
-    # Restart the capture thread
-    capture_thread_running = True
-    capture_thread = threading.Thread(target=capture_frames)
-    capture_thread.daemon = True
+    capture_thread = threading.Thread(target=save, args=(num_frames, timestep))
     capture_thread.start()
-
-    # Create a zip file of the captured images
-    zip_path = 'captured_images.zip'
-    shutil.make_archive('captured_images', 'zip', save_path)
 
     return redirect(url_for('index'))
 
