@@ -80,6 +80,8 @@ def save(num_frames, timestep):
         sleep_time = max(0, timestep - iteration_duration)
         time.sleep(sleep_time)
         
+    zip_path = 'captured_images.zip'
+    shutil.make_archive('captured_images', 'zip', save_path)
     # Emit an event to hide the progress div
     socketio.emit('capture_complete')
 
