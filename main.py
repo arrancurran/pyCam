@@ -58,7 +58,7 @@ def set_exposure():
 
 def save(num_frames, timestep):
     global progress
-    save_path = 'captured_images'
+    save_path = '/mnt/usb/captured_images'  # Change the save path to the USB disk
     os.makedirs(save_path, exist_ok=True)
     # Emit an event to show the progress div
     socketio.emit('show_progress')
@@ -80,11 +80,10 @@ def save(num_frames, timestep):
         sleep_time = max(0, timestep - iteration_duration)
         time.sleep(sleep_time)
         
-    zip_path = 'captured_images.zip'
-    shutil.make_archive('captured_images', 'zip', save_path)
+    zip_path = '/mnt/usb/captured_images.zip'  # Change the zip path to the USB disk
+    shutil.make_archive('/mnt/usb/captured_images', 'zip', save_path)
     # Emit an event to hide the progress div
     socketio.emit('capture_complete')
-
 
 @app.route('/start_acquisition', methods=['POST'])
 def start_acquisition():
@@ -98,7 +97,7 @@ def start_acquisition():
 
 @app.route('/download_images')
 def download_images():
-    return send_file('captured_images.zip', as_attachment=True)
+    return send_file('/mnt/usb/captured_images.zip', as_attachment=True)
 
 if __name__ == '__main__':
     # socketio.run(app, host='0.0.0.0', port=5000)
