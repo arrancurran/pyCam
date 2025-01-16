@@ -1,4 +1,5 @@
 #!/bin/bash
+# TODO: Setup variables for sys name, server address, user name and group name
 
 # Update and upgrade the system
 sudo apt-get update && sudo apt-get -y upgrade
@@ -101,3 +102,11 @@ sudo systemctl start pyCam.service
 # TODO: Check the service is running
 # Check the status of the service
 # sudo systemctl status pyCam.service
+
+# Setting up auto mount for external USB drive
+# Create a directory to mount the USB drive
+
+sudo mkdir -p /mnt/usb
+sudo chown -R pcsm-scope:pcsm-scope /mnt/usb/
+
+#UUID=4039-14F4 /mnt/usb vfat defaults,auto,users,rw,nofail,noatime 0 0
