@@ -103,8 +103,7 @@ def download_images():
 def umount_usb():
     try:
         result = subprocess.run(['sudo', 'umount', '/mnt/usb'], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        return jsonify({'status': 'success', 'message': result.stdout.decode('utf-8')}), 500
-        # return jsonify({'status': 'success', 'message': 'hello'})
+        return jsonify({'status': 'success', 'message': 'Unmounting USB disk.'})
     except subprocess.CalledProcessError as e:
         return jsonify({'status': 'error', 'message': e.stderr.decode('utf-8') + ' Try restarting the Raspberry Pi.'}), 500
 
@@ -112,7 +111,7 @@ def umount_usb():
 def mount_usb():
     try:
         result = subprocess.run(['sudo', 'mount', '/mnt/usb'], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        return jsonify({'status': 'success', 'message': result.stdout.decode('utf-8')}), 500
+        return jsonify({'status': 'success', 'message': 'Mounting USB disk.'})
     except subprocess.CalledProcessError as e:
         return jsonify({'status': 'error', 'message': e.stderr.decode('utf-8') + ' Try restarting the Raspberry Pi.'}), 500
 
