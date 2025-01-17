@@ -3,8 +3,7 @@ from flask import Flask, render_template, request, redirect, url_for, send_file,
 from flask_socketio import SocketIO
 from pypylon import pylon
 from PIL import Image
-import cv2, threading, time, os, shutil, base64
-import subprocess
+import cv2, threading, time, os, shutil, base64, subprocess
 
 app = Flask(__name__)
 socketio = SocketIO(app)
@@ -106,7 +105,7 @@ def umount_usb():
         result = subprocess.run(['sudo', 'umount', '/mnt/usb'], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         return jsonify({'status': 'success', 'message': result.stdout.decode('utf-8')})
     except subprocess.CalledProcessError as e:
-        return jsonify({'status': 'error', 'message': e.stderr.decode('utf-8')}), 500
+        return jsonify({'status': 'error', 'message': e.stderr.decode('utf-8') + ' Try restarting the Raspberry Pi.'}), 500
 
 if __name__ == '__main__':
     # socketio.run(app, host='0.0.0.0', port=5000)
