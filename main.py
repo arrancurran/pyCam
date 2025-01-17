@@ -4,6 +4,7 @@ from flask_socketio import SocketIO
 from pypylon import pylon
 from PIL import Image
 import cv2, threading, time, os, shutil, base64
+import subprocess
 
 app = Flask(__name__)
 socketio = SocketIO(app)
@@ -98,6 +99,14 @@ def start_acquisition():
 @app.route('/download_images')
 def download_images():
     return send_file('/mnt/usb/captured_images.zip', as_attachment=True)
+
+@app.route('/umount_usb', methods=['POST'])
+def umount_usb():
+    try:
+        result = subprocess.run(['sudo', 'umount', '/mnt/usb'], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        return jsonify({'status': 'success', 'message': result.stdout.decode('utf-8')})
+    except subprocess.CalledProcessError as e:
+        return jsonify({'status': 'error', 'message': e.stderr.decode('utf-8')}), 500
 
 if __name__ == '__main__':
     # socketio.run(app, host='0.0.0.0', port=5000)

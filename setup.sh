@@ -105,8 +105,18 @@ sudo systemctl start pyCam.service
 
 # Setting up auto mount for external USB drive
 # Create a directory to mount the USB drive
-
 sudo mkdir -p /mnt/usb
-sudo chown -R pcsm-scope:pcsm-scope /mnt/usb/
 
-#UUID=4039-14F4 /mnt/usb vfat defaults,auto,users,rw,nofail,noatime 0 0
+# Add the USB drive to /etc/fstab for auto-mounting
+# Replace 'UUID=your-uuid' with the actual UUID of your USB drive
+echo "UUID=95EE-C4CA /mnt/usb vfat defaults,auto,users,rw,nofail,noatime,uid=pcsm-scope,gid=pcsm-scope 0 0" | sudo tee -a /etc/fstab
+
+# Mount the USB drive
+sudo mount -a
+
+# Ensure the user running the script has write permissions
+sudo chown -R pcsm-scope:pcsm-scope /mnt/usb
+sudo chmod -R 775 /mnt/usb
+
+#sudo blkid /dev/sda1
+#UUID=95EE-C4CA /mnt/usb vfat defaults,auto,users,rw,nofail,noatime
