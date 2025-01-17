@@ -144,17 +144,17 @@
     <div class="container stream">
         <img id="live-stream" src="" alt="Live Stream" />
     </div>
-    <div class="container download">
+    <div class="container controls">
         <a class="download_link" href="{{ url_for('download_images') }}">Download Capture</a>
+        <!-- Mount the USB drive -->
+        <form action="{{ url_for('mount_usb') }}" method="post">
+            <button class="control_button" type="submit">Re-Mount USB</button>
+        </form>
+        <!-- Unmount the USB drive -->
+        <form action="{{ url_for('umount_usb') }}" method="post">
+            <button class="control_button" type="submit">Safely Remove USB</button>
+        </form>
     </div>
-    <!-- Mount the USB drive -->
-    <form action="{{ url_for('mount_usb') }}" method="post">
-        <button type="submit">Re-Mount USB</button>
-    </form>
-    <!-- Unmount the USB drive -->
-    <form action="{{ url_for('umount_usb') }}" method="post">
-        <button type="submit">Safely Remove USB</button>
-    </form>
     <div class="container footer">
         <p>SMP - Camera App 0.3 beta</p>
     </div>
