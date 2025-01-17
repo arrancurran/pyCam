@@ -93,6 +93,9 @@ body {
   border-radius: 0.2rem;
   text-transform: uppercase;
   transition: background-color 0.3s ease;
+  text-decoration: none;
+  font-weight: bold;
+  cursor: pointer;
 }
 .control_button:hover, .download_link:hover {
   background-color: rgb(166, 165, 178);
@@ -108,11 +111,11 @@ body {
 .download_link {
   width: 100%;
   max-width: 600px;
-  margin: 3rem 3rem;
   padding: 1rem 0;
-  cursor: pointer;
-  text-decoration: none;
-  font-weight: bold;
+}
+
+.actions .download_link, .actions .control_button {
+  margin: 1rem 1rem;
 }
 
 .footer {
