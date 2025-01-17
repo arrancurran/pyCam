@@ -73,6 +73,21 @@
                 });
             });
 
+            // Handle reboot
+            $('#reboot').on('submit', function(e) {
+                e.preventDefault();
+                $.ajax({
+                    type: 'POST',
+                    url: '/reboot',
+                    success: function(response) {
+                        showPopup(response.message);
+                    },
+                    error: function(response) {
+                        showPopup(response.responseJSON.message);
+                    }
+                });
+            });
+
             function showPopup(message) {
                 var popup = document.createElement('div');
                 popup.className = 'popup';
