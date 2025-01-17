@@ -113,7 +113,15 @@ def mount_usb():
         result = subprocess.run(['sudo', 'mount', '/mnt/usb'], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         return jsonify({'status': 'success', 'message': 'Mounting USB disk.'})
     except subprocess.CalledProcessError as e:
-        return jsonify({'status': 'error', 'message': e.stderr.decode('utf-8') + ' Try restarting the Raspberry Pi.'}), 500
+        return jsonify({'status': 'error', 'message': 'USB Already Mounted. If you cant record, try restarting the Raspberry Pi.'}), 500
+
+@app.route('/reboot', methods=['POST'])
+def reboot():
+    try:
+        result = subprocess.run(['sudo', 'reboot', 'now'], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        return jsonify({'status': 'success', 'message': 'Rebooting Pi. Refresh this page in a few seconds.'})
+    except subprocess.CalledProcessError as e:
+        return jsonify({'status': 'error', 'message': e.stderr.decode('utf-8') + ' Try restarting the Raspberry Pi using the power button.'}), 500
 
 
 if __name__ == '__main__':

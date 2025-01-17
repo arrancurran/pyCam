@@ -194,9 +194,13 @@
         <form id="umount_usb" action="{{ url_for('umount_usb') }}" method="post">
             <button class="control_button" type="submit">Safely Remove USB</button>
         </form>
+         <!-- Reboot Pi -->
+         <form id="reboot" action="{{ url_for('reboot') }}" method="post">
+            <button class="control_button" type="submit">Reboot RPi</button>
+        </form>
     </div>
     <div class="container footer">
-        <p>SMP - Camera App 0.3 beta</p>
+        <p>SMP - Camera App 0.4 beta</p>
     </div>
 
 </section>
