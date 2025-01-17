@@ -147,9 +147,10 @@
     <div class="container download">
         <a class="download_link" href="{{ url_for('download_images') }}">Download Capture</a>
     </div>
-    <div class="container umount">
-        <a class="umount_link" href="{{ url_for('umount_usb') }}">Download Capture</a>
-    </div>
+    <!-- Add a form to unmount the USB drive -->
+    <form action="{{ url_for('umount_usb') }}" method="post">
+        <button type="submit">Unmount USB</button>
+    </form>
     <div class="container footer">
         <p>SMP - Camera App 0.2 beta</p>
     </div>
