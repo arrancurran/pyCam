@@ -29,17 +29,18 @@ capture_in_progress = False
 # 
 def stream():
     global latest_frame, stream_running, capture_in_progress
-    while stream_running and camera.IsGrabbing():
-        grabResult = camera.RetrieveResult(5000, pylon.TimeoutHandling_ThrowException)
-        if grabResult.GrabSucceeded():
-            img = grabResult.Array
-            # Reduce resolution for streaming
-            img_resized = cv2.resize(img, (640, 480))
-            ret, buffer = cv2.imencode('.jpg', img_resized, [int(cv2.IMWRITE_JPEG_QUALITY), 80])
-            latest_frame = base64.b64encode(buffer).decode('utf-8')
-            socketio.emit('frame', latest_frame)
-        grabResult.Release()
-    time.sleep(0.1)
+    while stream_running:
+        if not capture_in_progress and camera.IsGrabbing():
+            grabResult = camera.RetrieveResult(5000, pylon.TimeoutHandling_ThrowException)
+            if grabResult.GrabSucceeded():
+                img = grabResult.Array
+                # Reduce resolution for streaming
+                img_resized = cv2.resize(img, (640, 480))
+                ret, buffer = cv2.imencode('.jpg', img_resized, [int(cv2.IMWRITE_JPEG_QUALITY), 80])
+                latest_frame = base64.b64encode(buffer).decode('utf-8')
+                socketio.emit('frame', latest_frame)
+            grabResult.Release()
+        time.sleep(0.1)
 
 # Start the frame capture thread
 capture_thread = threading.Thread(target=stream)
@@ -59,9 +60,8 @@ def set_exposure():
     return redirect(url_for('index'))
 
 def save(num_frames, timestep):
-    global progress, stream_running
-    stream_running = False
-    
+    global progress, capture_in_progress
+    capture_in_progress = True
     save_path = '/mnt/usb/captured_images'
     os.makedirs(save_path, exist_ok=True)
     # Emit an event to show the progress div
@@ -87,11 +87,9 @@ def save(num_frames, timestep):
         
     # zip_path = '/mnt/usb/captured_images.zip'  # Change the zip path to the USB disk
     # shutil.make_archive('/mnt/usb/captured_images', 'zip', save_path)
-    
     # Emit an event to hide the progress div
     socketio.emit('capture_complete')
-    stream_running = True
-    
+    capture_in_progress = False
 # 
 # USER INTERFACE
 # 
@@ -106,7 +104,6 @@ def start_acquisition():
     capture_thread.start()
 
     return redirect(url_for('index'))
-
 
 # Below requires the user running the script to have sudo privileges with passwordless sudo enabled
 
