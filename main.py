@@ -86,7 +86,7 @@ def save(num_frames, timestep):
         time.sleep(sleep_time)
         
     zip_path = '/mnt/usb/captured_images.zip'  # Change the zip path to the USB disk
-    shutil.make_archive('/mnt/usb/captured_images', 'zip', save_path)
+    # shutil.make_archive('/mnt/usb/captured_images', 'zip', save_path)
     # Emit an event to hide the progress div
     socketio.emit('capture_complete')
     capture_in_progress = False
