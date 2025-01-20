@@ -19,23 +19,27 @@ capture_thread = None
 stream_running = True
 progress = 0
 
+# Global variable to control streaming state
+capture_in_progress = False
+
 # 
 # STREAMING
 # 
 # while stream_running is true, capture frames from the camera and emit them to the client
 # 
 def stream():
-    global latest_frame, stream_running
-    while stream_running and camera.IsGrabbing():
-        grabResult = camera.RetrieveResult(5000, pylon.TimeoutHandling_ThrowException)
-        if grabResult.GrabSucceeded():
-            img = grabResult.Array
-            # Reduce resolution for streaming
-            img_resized = cv2.resize(img, (640, 480))
-            ret, buffer = cv2.imencode('.jpg', img_resized, [int(cv2.IMWRITE_JPEG_QUALITY), 80])
-            latest_frame = base64.b64encode(buffer).decode('utf-8')
-            socketio.emit('frame', latest_frame)
-        grabResult.Release()
+    global latest_frame, stream_running, capture_in_progress
+    while stream_running:
+        if not capture_in_progress and camera.IsGrabbing():
+            grabResult = camera.RetrieveResult(5000, pylon.TimeoutHandling_ThrowException)
+            if grabResult.GrabSucceeded():
+                img = grabResult.Array
+                # Reduce resolution for streaming
+                img_resized = cv2.resize(img, (640, 480))
+                ret, buffer = cv2.imencode('.jpg', img_resized, [int(cv2.IMWRITE_JPEG_QUALITY), 80])
+                latest_frame = base64.b64encode(buffer).decode('utf-8')
+                socketio.emit('frame', latest_frame)
+            grabResult.Release()
         time.sleep(0.1)  # Adjust the sleep time to control the frame rate
 
 
@@ -57,7 +61,8 @@ def set_exposure():
     return redirect(url_for('index'))
 
 def save(num_frames, timestep):
-    global progress
+    global progress, capture_in_progress
+    capture_in_progress = True
     save_path = '/mnt/usb/captured_images'  # Change the save path to the USB disk
     os.makedirs(save_path, exist_ok=True)
     # Emit an event to show the progress div
@@ -84,6 +89,7 @@ def save(num_frames, timestep):
     shutil.make_archive('/mnt/usb/captured_images', 'zip', save_path)
     # Emit an event to hide the progress div
     socketio.emit('capture_complete')
+    capture_in_progress = False
 
 @app.route('/start_acquisition', methods=['POST'])
 def start_acquisition():
