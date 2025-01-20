@@ -29,19 +29,17 @@ capture_in_progress = False
 # 
 def stream():
     global latest_frame, stream_running, capture_in_progress
-    while stream_running:
-        if not capture_in_progress and camera.IsGrabbing():
-            grabResult = camera.RetrieveResult(5000, pylon.TimeoutHandling_ThrowException)
-            if grabResult.GrabSucceeded():
-                img = grabResult.Array
-                # Reduce resolution for streaming
-                img_resized = cv2.resize(img, (640, 480))
-                ret, buffer = cv2.imencode('.jpg', img_resized, [int(cv2.IMWRITE_JPEG_QUALITY), 80])
-                latest_frame = base64.b64encode(buffer).decode('utf-8')
-                socketio.emit('frame', latest_frame)
-            grabResult.Release()
-        time.sleep(0.1)  # Adjust the sleep time to control the frame rate
-
+    while stream_running and camera.IsGrabbing():
+        grabResult = camera.RetrieveResult(5000, pylon.TimeoutHandling_ThrowException)
+        if grabResult.GrabSucceeded():
+            img = grabResult.Array
+            # Reduce resolution for streaming
+            img_resized = cv2.resize(img, (640, 480))
+            ret, buffer = cv2.imencode('.jpg', img_resized, [int(cv2.IMWRITE_JPEG_QUALITY), 80])
+            latest_frame = base64.b64encode(buffer).decode('utf-8')
+            socketio.emit('frame', latest_frame)
+        grabResult.Release()
+    time.sleep(0.1)
 
 # Start the frame capture thread
 capture_thread = threading.Thread(target=stream)
@@ -61,9 +59,10 @@ def set_exposure():
     return redirect(url_for('index'))
 
 def save(num_frames, timestep):
-    global progress, capture_in_progress
-    capture_in_progress = True
-    save_path = '/mnt/usb/captured_images'  # Change the save path to the USB disk
+    global progress, stream_running
+    stream_running = False
+    
+    save_path = '/mnt/usb/captured_images'
     os.makedirs(save_path, exist_ok=True)
     # Emit an event to show the progress div
     socketio.emit('show_progress')
@@ -74,6 +73,7 @@ def save(num_frames, timestep):
         socketio.emit('progress', {'progress': progress})
         time.sleep(timestep)
         grabResult = camera.RetrieveResult(5000, pylon.TimeoutHandling_ThrowException)
+        
         if grabResult.GrabSucceeded():
             img = grabResult.Array
             img_pil = Image.fromarray(img)
@@ -87,9 +87,11 @@ def save(num_frames, timestep):
         
     # zip_path = '/mnt/usb/captured_images.zip'  # Change the zip path to the USB disk
     # shutil.make_archive('/mnt/usb/captured_images', 'zip', save_path)
+    
     # Emit an event to hide the progress div
     socketio.emit('capture_complete')
-    capture_in_progress = False
+    stream_running = True
+    
 # 
 # USER INTERFACE
 # 
@@ -105,10 +107,10 @@ def start_acquisition():
 
     return redirect(url_for('index'))
 
-# @app.route('/download_images')
-# def download_images():
-#     return send_file('/mnt/usb/captured_images.zip', as_attachment=True)
 
+# Below requires the user running the script to have sudo privileges with passwordless sudo enabled
+
+# Unmount USB
 @app.route('/umount_usb', methods=['POST'])
 def umount_usb():
     try:
@@ -117,6 +119,7 @@ def umount_usb():
     except subprocess.CalledProcessError as e:
         return jsonify({'status': 'error', 'message': e.stderr.decode('utf-8') + ' Try restarting the Raspberry Pi.'}), 500
 
+# Mount USB
 @app.route('/mount_usb', methods=['POST'])
 def mount_usb():
     try:
@@ -125,6 +128,7 @@ def mount_usb():
     except subprocess.CalledProcessError as e:
         return jsonify({'status': 'error', 'message': 'USB Already Mounted. If you cant record, try restarting the Raspberry Pi.'}), 500
 
+# Reboot the Rasberry Pi
 @app.route('/reboot', methods=['POST'])
 def reboot():
     try:
@@ -133,6 +137,9 @@ def reboot():
     except subprocess.CalledProcessError as e:
         return jsonify({'status': 'error', 'message': e.stderr.decode('utf-8') + ' Try restarting the Raspberry Pi using the power button.'}), 500
 
+# @app.route('/download_images')
+# def download_images():
+#     return send_file('/mnt/usb/captured_images.zip', as_attachment=True)
 
 if __name__ == '__main__':
     # socketio.run(app, host='0.0.0.0', port=5000)
