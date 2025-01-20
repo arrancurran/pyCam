@@ -85,12 +85,16 @@ def save(num_frames, timestep):
         sleep_time = max(0, timestep - iteration_duration)
         time.sleep(sleep_time)
         
-    zip_path = '/mnt/usb/captured_images.zip'  # Change the zip path to the USB disk
+    # zip_path = '/mnt/usb/captured_images.zip'  # Change the zip path to the USB disk
     # shutil.make_archive('/mnt/usb/captured_images', 'zip', save_path)
     # Emit an event to hide the progress div
     socketio.emit('capture_complete')
     capture_in_progress = False
+# 
+# USER INTERFACE
+# 
 
+# Start acquisition
 @app.route('/start_acquisition', methods=['POST'])
 def start_acquisition():
     num_frames = int(request.form['num_frames'])
@@ -101,9 +105,9 @@ def start_acquisition():
 
     return redirect(url_for('index'))
 
-@app.route('/download_images')
-def download_images():
-    return send_file('/mnt/usb/captured_images.zip', as_attachment=True)
+# @app.route('/download_images')
+# def download_images():
+#     return send_file('/mnt/usb/captured_images.zip', as_attachment=True)
 
 @app.route('/umount_usb', methods=['POST'])
 def umount_usb():
